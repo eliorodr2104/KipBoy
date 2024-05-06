@@ -19,5 +19,5 @@ Welcome to the documentation of the PipBoy project! This application aims to emu
 ### Bug Reporting:
 If you encounter bugs or issues while using the application, please open an issue on the GitHub repository so that we can address them as soon as possible.
 
-### License:
-This project is released under the [MIT license](https://opensource.org/licenses/MIT). Feel free to use, modify, and distribute the code as you wish.
+### License
+This project is licensed under the [MIT License](LICENSE).
