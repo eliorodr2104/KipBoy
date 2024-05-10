@@ -21,6 +21,12 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     implementation("uk.co.caprica:vlcj:4.8.2")
+
+    //Raspberry [TEST]
+    implementation("com.pi4j:pi4j-ktx:2.4.0") // Kotlin DSL
+    implementation("com.pi4j:pi4j-core:2.6.0")
+    implementation("com.pi4j:pi4j-plugin-raspberrypi:2.5.1")
+    implementation("com.pi4j:pi4j-plugin-pigpio:2.5.1")
 }
 
 compose.desktop {
