@@ -1,19 +1,23 @@
 package ui
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.NativeKeyEvent
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.pi4j.io.gpio.digital.PullResistance
-import com.pi4j.ktx.console
-import com.pi4j.ktx.io.digital.digitalInput
-import com.pi4j.ktx.io.digital.onLow
-import com.pi4j.ktx.io.digital.piGpioProvider
-import com.pi4j.ktx.pi4j
-import enums.ColorsPipBoy.*
+import dataItems.DataPerson
+import enums.ColorsPipBoy.GREEN
+import enums.ColorsPipBoy.PINK
 import enums.TypesColorsPipBoy.BACKGROUNDCOLOR
 import enums.TypesColorsPipBoy.SELECTCOLOR
 import kotlinx.coroutines.delay
@@ -27,13 +31,25 @@ import kotlin.io.path.Path
 fun App() {
     var showImage by remember { mutableStateOf(true) }
 
-    val backgroundColor = GREEN.colors[BACKGROUNDCOLOR]!!
-    val selectColor = GREEN.colors[SELECTCOLOR]!!
+    var infoUtente by remember {
+        mutableStateOf(
+            DataPerson(
+                name = "Eliomar",
+                lastname = "",
+                dateOfBirth = "",
+                pointsSpecial = 0,
+                colorPipboy = PINK
+            )
+        )
+    }
+
+    val backgroundColor = infoUtente.colorPipboy.colors[BACKGROUNDCOLOR]!!
+    val selectColor = infoUtente.colorPipboy.colors[SELECTCOLOR]!!
 
     MaterialTheme {
         LaunchedEffect(showImage) {
             if (showImage) {
-                delay(10)
+                delay(10) //22000
                 showImage = false
             }
         }
@@ -42,10 +58,21 @@ fun App() {
             ShowImageScreen()
 
         } else {
-            ManageMenuScreens(
+            ManagementBootScreens(
                 backgroundColor = backgroundColor,
                 selectColor = selectColor
             )
+            /*
+
+             */
+
+            /*
+            ManageMenuScreens(
+                backgroundColor = backgroundColor,
+                selectColor = selectColor,
+                infoUtente = infoUtente
+            )
+             */
         }
     }
 }
@@ -65,10 +92,17 @@ fun ShowImageScreen() {
 
 fun main() = application {
     val windowTitle by remember { mutableStateOf("Kip-Boy") }
+    var keyUser by remember {
+        mutableStateOf(KeyEvent(NativeKeyEvent()))
+    }
 
     Window(
         onCloseRequest = ::exitApplication,
-        title = windowTitle
+        title = windowTitle,
+        onKeyEvent = {
+            keyUser = it
+            true
+        }
     ) {
         window.minimumSize = Dimension(800, 600)
         App()

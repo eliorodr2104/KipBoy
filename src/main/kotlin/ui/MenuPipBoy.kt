@@ -22,11 +22,11 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import dataItems.DataBottomBarPipBoy
+import dataItems.DataPerson
 import enums.MacroMenusPipBoy
 import enums.MacroMenusPipBoy.*
 import enums.MicroMenusPipBoy
@@ -37,7 +37,8 @@ import kotlin.math.abs
 @Composable
 fun ManageMenuScreens(
     backgroundColor: Color,
-    selectColor: Color
+    selectColor: Color,
+    infoUtente: DataPerson
 ) {
     var itemSelected by remember {
         mutableStateOf(STAT)
@@ -152,8 +153,7 @@ fun ManageMenuScreens(
                 changeMenu = { itemSelected = it },
                 itemSelected = itemSelected,
                 changeSubMenuItemSelected = { subMenuItemSelected = it },
-                selectColor = selectColor,
-                backgroundColor = backgroundColor
+                selectColor = selectColor
             )
         },
 
@@ -170,7 +170,8 @@ fun ManageMenuScreens(
                     STATUS -> {
                         StatusScreen(
                             backgroundColor = backgroundColor,
-                            selectColor = selectColor
+                            selectColor = selectColor,
+                            infoPerson = infoUtente
                         )
                     }
                     SPECIAL -> {
@@ -244,7 +245,6 @@ private fun TopBarPipBoy(
     changeMenu: (MacroMenusPipBoy) -> Unit,
     itemSelected: MacroMenusPipBoy,
     changeSubMenuItemSelected: (MicroMenusPipBoy) -> Unit,
-    backgroundColor: Color,
     selectColor: Color
 ) {
     val window = LocalWindowInfo.current
@@ -267,6 +267,29 @@ private fun TopBarPipBoy(
 
     var sizeItemSelected by remember {
         mutableStateOf(IntSize(0, 0))
+    }
+
+    val PADDING_START_LINE_INTO_SCREEN = 20f
+    val PADDING_TO_JOIN_LINES = 4f
+
+    var finalLineUntilToItem by remember {
+        mutableStateOf(0f)
+    }
+
+    var xAxisTopLine by remember {
+        mutableStateOf(0f)
+    }
+
+    var xAxisSizeStandard by remember {
+        mutableStateOf(0f)
+    }
+
+    var standardPaddingPlusItemSize by remember {
+        mutableStateOf(0f)
+    }
+
+    var smallLineEnd by remember {
+        mutableStateOf(0f)
     }
 
     Column(
@@ -295,6 +318,12 @@ private fun TopBarPipBoy(
                                 if (itemSelected == item) {
                                     coordinatesItemSelected = layoutCoordinates.positionInRoot()
                                     sizeItemSelected = layoutCoordinates.size
+
+                                    finalLineUntilToItem = coordinatesItemSelected.x - 18f
+                                    xAxisTopLine = abs(coordinatesItemSelected.x - PADDING_START_LINE_INTO_SCREEN)
+                                    xAxisSizeStandard = abs(coordinatesItemSelected.x - 22f)
+                                    standardPaddingPlusItemSize = (coordinatesItemSelected.x + PADDING_START_LINE_INTO_SCREEN) + sizeItemSelected.width
+                                    smallLineEnd = abs(screenWidth - 22f)
                                 }
                             }
                             .clickable {
@@ -322,11 +351,11 @@ private fun TopBarPipBoy(
                 //Prima linea dalla partenza dello schermo fino alla collissione del primo Text
                 drawLine(
                     start = Offset(
-                        x = 20f,
+                        x = PADDING_START_LINE_INTO_SCREEN,
                         y = 0f
                     ),
                     end = Offset(
-                        x = coordinatesItemSelected.x - 18f,
+                        x = finalLineUntilToItem,
                         y = 0f
                     ),
                     color = selectColor,
@@ -336,11 +365,11 @@ private fun TopBarPipBoy(
                 //Riga che sale verso l'alto nel primo item
                 drawLine(
                     start = Offset(
-                        x = coordinatesItemSelected.x - 20f,
+                        x = xAxisTopLine,
                         y = 0f
                     ),
                     end = Offset(
-                        x = coordinatesItemSelected.x - 20f,
+                        x = xAxisTopLine,
                         y = - coordinatesItemSelected.y
                     ),
                     color = selectColor,
@@ -350,7 +379,7 @@ private fun TopBarPipBoy(
                 //Riga in alto che va a destra nel primo item
                 drawLine(
                     start = Offset(
-                        x = coordinatesItemSelected.x - 22f,
+                        x = xAxisSizeStandard,
                         y = - coordinatesItemSelected.y
                     ),
                     end = Offset(
@@ -364,11 +393,11 @@ private fun TopBarPipBoy(
                 //2nd line
                 drawLine(
                     start = Offset(
-                        x = (coordinatesItemSelected.x + 20f) + sizeItemSelected.width,
+                        x = standardPaddingPlusItemSize,
                         y = 0f
                     ),
                     end = Offset(
-                        x = (coordinatesItemSelected.x + 20f) + sizeItemSelected.width,
+                        x = standardPaddingPlusItemSize,
                         y = - coordinatesItemSelected.y
                     ),
                     color = selectColor,
@@ -396,7 +425,7 @@ private fun TopBarPipBoy(
                         y = 0f
                     ),
                     end = Offset(
-                        x = screenWidth - 20f,
+                        x = screenWidth - PADDING_START_LINE_INTO_SCREEN,
                         y = 0f
                     ),
                     color = selectColor,
@@ -420,11 +449,11 @@ private fun TopBarPipBoy(
                 //Riga finale che va giù
                 drawLine(
                     start = Offset(
-                        x = screenWidth - 22f,
+                        x = smallLineEnd,
                         y = 0f
                     ),
                     end = Offset(
-                        x = screenWidth - 22f,
+                        x = smallLineEnd,
                         y = 15f
                     ),
                     color = selectColor,

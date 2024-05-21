@@ -16,6 +16,7 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.dp
+import dataItems.DataPerson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
@@ -24,7 +25,8 @@ import kotlin.coroutines.coroutineContext
 @Composable
 fun StatusScreen(
     backgroundColor: Color,
-    selectColor: Color
+    selectColor: Color,
+    infoPerson: DataPerson
 ) {
     Box(
         modifier = Modifier
@@ -303,7 +305,7 @@ fun StatusScreen(
             }
 
             Text(
-                text = "Eliomar",
+                text = infoPerson.name,
                 color = selectColor
             )
         }
