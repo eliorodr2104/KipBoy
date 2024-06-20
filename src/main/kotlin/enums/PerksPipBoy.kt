@@ -2,6 +2,9 @@ package enums
 import dataItems.PerkLevelAndPrice
 import enums.SpecialPipBoy.*
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class PerksPipBoy(
     specialAttribute: SpecialPipBoy,
     maxRank: Int,

@@ -1,3 +1,4 @@
+
 package ui
 
 import androidx.compose.foundation.Canvas
@@ -5,10 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -23,47 +24,78 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import dataItems.DataPerson
+import dataItems.SpecialUser
+import enums.ColorsPipBoy
 import enums.FirstBootMenus
 import enums.FirstBootMenus.*
+import enums.PrincipalScreens
+import enums.SpecialPipBoy
+import enums.TypesColorsPipBoy.BACKGROUNDCOLOR
+import enums.TypesColorsPipBoy.SELECTCOLOR
 import kotlinx.coroutines.delay
-import java.text.ParseException
+import tools.FileManager
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.math.abs
+import enums.PrincipalScreens.*
+import java.time.Period
 
 @Composable
 fun ManagementBootScreens(
-    backgroundColor: Color,
-    selectColor: Color
+    fileManager: FileManager<DataPerson>,
+    changeIndexPrincipalScreen: (PrincipalScreens) -> Unit,
+    getInfoUser: (DataPerson) -> Unit
 ) {
     var indexScreen by remember {
-        mutableStateOf(INSERT_NAME)
+        mutableStateOf(INSERT_FAVORITE_COLOR)
     }
 
     val infoUser by remember {
         mutableStateOf(DataPerson())
     }
 
+    var colorUserBackground by remember {
+        mutableStateOf(infoUser.colorPipboy.colors[BACKGROUNDCOLOR]!!)
+    }
+
+    var colorUserSelect by remember {
+        mutableStateOf(infoUser.colorPipboy.colors[SELECTCOLOR]!!)
+    }
+
+    val pointsMax = 17f
+    val pointsMin = 7f
+    val ageMax = 100
+
     when(indexScreen) {
+        INSERT_FAVORITE_COLOR -> {
+            InsertFavoriteColor(
+                changeIndexScreen = { indexScreen = it },
+                getFavoriteColorPerson = {
+                    infoUser.colorPipboy = it
+                    colorUserBackground = infoUser.colorPipboy.colors[BACKGROUNDCOLOR]!!
+                    colorUserSelect = infoUser.colorPipboy.colors[SELECTCOLOR]!!
+                }
+            )
+        }
+
         INSERT_NAME -> {
             InsertName(
                 changeIndexScreen = { indexScreen = it },
                 getNamePerson = { infoUser.name = it },
-                backgroundColor = backgroundColor,
-                selectColor = selectColor
+                backgroundColor = colorUserBackground,
+                selectColor = colorUserSelect
             )
         }
 
         INSERT_LASTNAME -> {
             InsertLastname(
-                backgroundColor = backgroundColor,
-                selectColor = selectColor,
+                backgroundColor = colorUserBackground,
+                selectColor = colorUserSelect,
                 changeIndexScreen = { indexScreen = it },
                 getLastnamePerson = { infoUser.lastname = it }
             )
@@ -71,19 +103,360 @@ fun ManagementBootScreens(
 
         INSERT_BIRTHDAY -> {
             InsertDate(
-                backgroundColor,
-                selectColor,
+                colorUserBackground,
+                colorUserSelect,
                 changeIndexScreen = { indexScreen = it },
-                getBirthdayPerson = { infoUser.dateOfBirth = it }
+                getBirthdayPerson = {
+                    infoUser.dateOfBirth = it
+                    infoUser.age = calcAge(infoUser.dateOfBirth, "MM/dd/yyyy")
+                    infoUser.pointsSpecial = (pointsMax - (pointsMax - pointsMin) * (infoUser.age.toDouble() / ageMax)).toInt()
+                }
             )
         }
 
-        INSERT_FAVORITE_COLOR -> {
+        SELECT_SPECIAL -> {
+            InsertSpecialSelectLevel(
+                user = infoUser,
+                selectColor = colorUserSelect,
+                changePointsSpecial = { infoUser.pointsSpecial = it },
+                changeIndexScreen = {
+                    fileManager.writeObjectToFile(infoUser)
+                    getInfoUser(infoUser)
+                    changeIndexPrincipalScreen(PIP_BOY_MENUS)
+                },
+                changeSpecials = { infoUser.specialsUser = it }
+            )
+        }
+    }
+}
 
+@Composable
+private fun InsertSpecialSelectLevel(
+    user: DataPerson,
+    selectColor: Color,
+
+    changePointsSpecial: (Int) -> Unit,
+    changeSpecials: (List<SpecialUser>) -> Unit,
+    changeIndexScreen: (FirstBootMenus) -> Unit
+) {
+    var pointsSpecial by remember {
+        mutableStateOf(user.pointsSpecial)
+    }
+
+    var specialListUser by remember {
+        mutableStateOf(user.specialsUser)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = Color.Black
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        WindowsContainerWithName(
+            textWindow = "S.P.E.C.I.A.L",
+            colorText = selectColor,
+            colorBorderWindow = selectColor,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            SelectLevelSpecial(
+                user = user,
+                getSelectSpecialUser = { specialListUser = it },
+                getSelectPointUser = { pointsSpecial = it },
+                selectColor = selectColor
+            )
         }
 
-        SELECT_SPECIAL -> {
+        Button(
+            onClick = {
+                changeSpecials(specialListUser)
+                changePointsSpecial(pointsSpecial)
+                changeIndexScreen(SELECT_SPECIAL)
+            },
 
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    bottom = 26.dp,
+                    end = 30.dp
+                ),
+
+            shape = CutCornerShape(0.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = selectColor
+            )
+        ) {
+            Text(
+                text = "NEXT",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h6
+            )
+        }
+    }
+}
+
+@Composable
+fun SelectLevelSpecial(
+    user: DataPerson,
+    selectColor: Color,
+
+    getSelectPointUser: (Int) -> Unit,
+    getSelectSpecialUser: (List<SpecialUser>) -> Unit
+) {
+    var pointsSpecial by remember {
+        mutableIntStateOf(user.pointsSpecial)
+    }
+
+    val specialListUser by remember {
+        mutableStateOf(user.specialsUser)
+    }
+
+    var indexSpecialSelectable by remember {
+        mutableIntStateOf(0)
+    }
+
+    var selectSpecial by remember {
+        mutableStateOf(SpecialPipBoy.STRENGTH)
+    }
+
+    var usagePoints by remember {
+        mutableIntStateOf(0)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(
+                top = 15.dp,
+                bottom = 20.dp,
+                start = 10.dp,
+                end = 10.dp
+            )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = "Points: $pointsSpecial",
+                color = selectColor,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(
+                        bottom = 10.dp
+                    )
+            )
+
+            for ((index, special) in specialListUser.withIndex()) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable {
+                            indexSpecialSelectable = index
+                            selectSpecial = special.specialAttribute
+                        }
+                        .fillMaxWidth(0.5f)
+                        .background(
+                            color = if (indexSpecialSelectable == index) selectColor else Color.Transparent
+                        )
+                        .padding(
+                            all = 5.dp
+                        )
+                ) {
+                    Text(
+                        text = special.specialAttribute.name.lowercase().capitalize(),
+                        color = if (indexSpecialSelectable == index) Color.Black else selectColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        if (indexSpecialSelectable == index && usagePoints > 0 && special.levelSpecial > 0) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .clickable {
+                                        pointsSpecial++
+                                        usagePoints--
+                                        special.levelSpecial--
+
+                                        getSelectPointUser(pointsSpecial)
+                                        getSelectSpecialUser(specialListUser)
+                                    }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                    contentDescription = "delete point"
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = special.levelSpecial.toString().capitalize(),
+                            color = if (indexSpecialSelectable == index) Color.Black else selectColor,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .padding(
+                                    start = 5.dp,
+                                    end = 5.dp
+                                )
+                        )
+
+                        if (indexSpecialSelectable == index && pointsSpecial > 0) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .clickable {
+                                        pointsSpecial--
+                                        usagePoints++
+                                        special.levelSpecial++
+
+                                        getSelectPointUser(pointsSpecial)
+                                        getSelectSpecialUser(specialListUser)
+                                    }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                                    contentDescription = "add point"
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            ImageCycler(
+                modifier = Modifier
+                    .height(220.dp),
+                selectColor = selectColor,
+                imagesList = selectSpecial.dataFrame.pathFrame,
+                quantityFrames = selectSpecial.dataFrame.quantityFrame,
+                intervalMillis = selectSpecial.dataFrame.millisFrames
+            )
+
+            Text(
+                text = selectSpecial.descriptionSpecial,
+                color = selectColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun InsertFavoriteColor(
+    changeIndexScreen: (FirstBootMenus) -> Unit,
+    getFavoriteColorPerson: (ColorsPipBoy) -> Unit
+) {
+    var colorPerson by remember {
+        mutableStateOf(ColorsPipBoy.GREEN)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = Color.Black
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        WindowsContainerWithName(
+            textWindow = "Favorite Color",
+            colorText = colorPerson.colors[SELECTCOLOR]!!,
+            colorBorderWindow = colorPerson.colors[SELECTCOLOR]!!,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            DefaultColorPicker(
+                getFavoriteColorPerson = { colorPerson = it }
+            )
+        }
+
+        Button(
+            onClick = {
+                getFavoriteColorPerson(colorPerson)
+                changeIndexScreen(INSERT_NAME)
+            },
+
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    bottom = 26.dp,
+                    end = 30.dp
+                ),
+
+            shape = CutCornerShape(0.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = colorPerson.colors[SELECTCOLOR]!!
+            )
+        ) {
+            Text(
+                text = "NEXT",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h6
+            )
+        }
+    }
+}
+
+@Composable
+private fun DefaultColorPicker(
+    getFavoriteColorPerson: (ColorsPipBoy) -> Unit
+) {
+    var colorSelect by remember {
+        mutableStateOf(ColorsPipBoy.GREEN)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (colorDefault in ColorsPipBoy.entries) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                if (colorSelect == colorDefault) {
+                    Text(
+                        text = " ",
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(90.dp)
+                        .background(
+                            color = colorDefault.colors[SELECTCOLOR]!!
+                        )
+                        .clickable {
+                            colorSelect = colorDefault
+                            getFavoriteColorPerson(colorSelect)
+                        }
+                )
+
+                if (colorSelect == colorDefault) {
+                    Text(
+                        text = colorDefault.name,
+                        color = colorDefault.colors[SELECTCOLOR]!!
+                    )
+                }
+            }
         }
     }
 }
@@ -126,7 +499,7 @@ private fun InsertDate(
             onClick = {
                 if (isValidDate(birthdayPerson)) {
                     getBirthdayPerson(birthdayPerson)
-                    changeIndexScreen(INSERT_FAVORITE_COLOR)
+                    changeIndexScreen(SELECT_SPECIAL)
                 }
             },
 
@@ -940,4 +1313,17 @@ private fun WindowsContainerWithName(
             )
         }
     }
+}
+
+private fun String.capitalize(): String {
+   return this.replaceFirstChar { if (it. isLowerCase()) it. titlecase(Locale. getDefault()) else it. toString() }
+}
+
+private fun calcAge(dateBornUser: String, format: String): Int {
+    val formatter = DateTimeFormatter.ofPattern(format)
+    val dateBorn = LocalDate.parse(dateBornUser, formatter)
+    val today = LocalDate.now()
+    val age = Period.between(dateBorn, today).years
+
+    return age
 }

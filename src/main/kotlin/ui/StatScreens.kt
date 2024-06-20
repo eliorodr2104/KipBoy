@@ -28,6 +28,8 @@ fun StatusScreen(
     selectColor: Color,
     infoPerson: DataPerson
 ) {
+    val imageList = "img/frames-test/icon_luck_"
+
     Box(
         modifier = Modifier
             .padding(
@@ -317,8 +319,12 @@ fun StatusScreen(
                 )
                 .padding(
                     top = 45.dp
-                ),
-            selectColor = selectColor
+                )
+                .height(250.dp),
+            selectColor = selectColor,
+            imagesList = imageList,
+            quantityFrames = 8,
+            intervalMillis = 150L
         )
     }
 }
@@ -344,68 +350,34 @@ private fun LifePartsVaultBoy(
 }
 
 @Composable
-private fun ImageCycler(
+fun ImageCycler(
     modifier: Modifier,
-    selectColor: Color
+    selectColor: Color,
+
+    imagesList: String,
+    quantityFrames: Int,
+    intervalMillis: Long
 ) {
-    val imageList = listOf(
-        "img/vault-boy-frames/frame_00_delay-0.1s.png",
-        "img/vault-boy-frames/frame_01_delay-0.1s.png",
-        "img/vault-boy-frames/frame_02_delay-0.1s.png",
-        "img/vault-boy-frames/frame_03_delay-0.1s.png",
-        "img/vault-boy-frames/frame_04_delay-0.1s.png",
-        "img/vault-boy-frames/frame_05_delay-0.1s.png",
-        "img/vault-boy-frames/frame_06_delay-0.1s.png",
-        "img/vault-boy-frames/frame_07_delay-0.1s.png",
-        "img/vault-boy-frames/frame_08_delay-0.1s.png",
-        "img/vault-boy-frames/frame_09_delay-0.1s.png",
-        "img/vault-boy-frames/frame_10_delay-0.1s.png",
-        "img/vault-boy-frames/frame_11_delay-0.1s.png",
-        "img/vault-boy-frames/frame_12_delay-0.1s.png",
-        "img/vault-boy-frames/frame_13_delay-0.1s.png",
-        "img/vault-boy-frames/frame_14_delay-0.1s.png",
-        "img/vault-boy-frames/frame_15_delay-0.1s.png",
-        "img/vault-boy-frames/frame_16_delay-0.1s.png",
-        "img/vault-boy-frames/frame_17_delay-0.1s.png",
-        "img/vault-boy-frames/frame_18_delay-0.1s.png",
-        "img/vault-boy-frames/frame_19_delay-0.1s.png",
-        "img/vault-boy-frames/frame_20_delay-0.1s.png"
+    var index by remember { mutableStateOf(1) }
 
-    )
-
-    val imageListTest = listOf(
-        "img/frames-test/icon_luck_1.png",
-        "img/frames-test/icon_luck_7.png",
-        "img/frames-test/icon_luck_8.png",
-        "img/frames-test/icon_luck_9.png",
-        "img/frames-test/icon_luck_10.png",
-        "img/frames-test/icon_luck_11.png",
-        "img/frames-test/icon_luck_12.png",
-        "img/frames-test/icon_luck_13.png"
-    )
-
-
-    val intervalMillis = 180
-
-    var index by remember { mutableStateOf(0) }
-
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(quantityFrames, intervalMillis) {
         while (true) {
-            delay(intervalMillis.toLong())
-            index = (index + 1) % imageListTest.size
+            delay(intervalMillis)
+            index = if (index + 1 <= quantityFrames) index + 1 else 1
         }
     }
 
-    val bitmap by produceState<ImageBitmap?>(null, index) {
-        value = loadImageBitmapFromFile(imageListTest[index])
+    val bitmap by produceState<ImageBitmap?>(null, imagesList, index) {
+        try {
+            value = loadImageBitmapFromFile("$imagesList$index.png")
+        } catch (_: Exception) {  }
     }
 
     bitmap?.let {
         Image(
             bitmap = it,
             contentDescription = null,
-            modifier = modifier
-                .height(250.dp),
+            modifier = modifier,
             contentScale = ContentScale.FillHeight,
             colorFilter = ColorFilter.tint(
                 color = selectColor

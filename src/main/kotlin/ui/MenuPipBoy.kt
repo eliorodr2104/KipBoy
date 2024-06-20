@@ -1,5 +1,6 @@
 package ui
 
+import MapView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +32,7 @@ import enums.MacroMenusPipBoy
 import enums.MacroMenusPipBoy.*
 import enums.MicroMenusPipBoy
 import enums.MicroMenusPipBoy.*
+import tools.FileManager
 import tools.audioPlayer.SoundsPlayer
 import kotlin.math.abs
 
@@ -38,7 +40,9 @@ import kotlin.math.abs
 fun ManageMenuScreens(
     backgroundColor: Color,
     selectColor: Color,
-    infoUtente: DataPerson
+    infoUtente: DataPerson,
+
+    fileManager: FileManager<DataPerson>
 ) {
     var itemSelected by remember {
         mutableStateOf(STAT)
@@ -47,6 +51,8 @@ fun ManageMenuScreens(
     var subMenuItemSelected by remember {
         mutableStateOf(itemSelected.realListMicroMenusPipBoy[0])
     }
+
+
 
     val listDataBottomBarPipBoy = listOf(
         DataBottomBarPipBoy(
@@ -83,7 +89,7 @@ fun ManageMenuScreens(
                 ),
             firstElement = {
                 Text(
-                    text = "LEVEL 1",
+                    text = "LEVEL ${infoUtente.age}",
                     style = MaterialTheme.typography.body2,
                     color = selectColor,
                     fontWeight = FontWeight.Bold
@@ -110,8 +116,9 @@ fun ManageMenuScreens(
                                 size = 0.dp
                             )
                         ),
-                    color = Color.Transparent,
-                    backgroundColor = Color.Transparent
+                    color = selectColor,
+                    backgroundColor = Color.Transparent,
+                    progress = infoUtente.age.toFloat() / 100
                 )
             }
         ),
@@ -163,7 +170,7 @@ fun ManageMenuScreens(
                 backgroundColor = backgroundColor
             )
         }
-    ) {
+    ) { innerPaddings ->
         when(itemSelected) {
             STAT -> {
                 when(subMenuItemSelected) {
@@ -176,8 +183,26 @@ fun ManageMenuScreens(
                     }
                     SPECIAL -> {
                         Box(
-                            modifier = Modifier.fillMaxSize()
-                        )
+                            modifier = Modifier
+                                .padding(innerPaddings)
+                                .padding(
+                                    start = 15.dp,
+                                    end = 15.dp
+                                )
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SelectLevelSpecial(
+                                user = infoUtente,
+                                getSelectSpecialUser = {
+                                    infoUtente.specialsUser = it
+
+                                    fileManager.writeObjectToFile(infoUtente)
+                                },
+                                getSelectPointUser = { infoUtente.pointsSpecial = it },
+                                selectColor = selectColor
+                            )
+                        }
                     }
                     PERKS -> {
                         Box(
@@ -201,9 +226,26 @@ fun ManageMenuScreens(
             }
 
             MAP -> {
+                var latitude by remember { mutableStateOf("44.8167") }
+                var longitude by remember { mutableStateOf("8.7") }
+
                 Box(
-                    modifier = Modifier.fillMaxSize()
-                )
+                    modifier = Modifier
+                        .padding(innerPaddings)
+                        .padding(
+                            top = 5.dp,
+                            start = 15.dp,
+                            end = 15.dp,
+                            bottom = 5.dp
+                        )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MapView(latitude = latitude.toDouble(), longitude = longitude.toDouble()) { coord ->
+                        latitude = coord.lat.toString()
+                        longitude = coord.lon.toString()
+                    }
+                }
             }
 
             RADIO -> {
